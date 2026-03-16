@@ -15,6 +15,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
+permissions:
+  pull-requests: write
+  issues: write
+
 env:
   QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Update to your Agentic repo
   DEFAULT_QASE_PROJECT: 'GPS'                  # <-- Update to your Qase project
