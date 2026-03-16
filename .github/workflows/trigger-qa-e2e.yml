@@ -7,7 +7,6 @@
 #      with "Contents: Read & Write" permission on the AE.QA.Agentic repo.
 #   2. Add the PAT as a secret named QA_DISPATCH_TOKEN in your dev repo.
 #   3. Update QA_REPO below to point to the AE.QA.Agentic repo (owner/repo).
-#   4. Update JIRA_PROJECT_PREFIX if your Jira project key differs.
 # ============================================================================
 
 name: Trigger QA E2E on PR
@@ -15,10 +14,11 @@ name: Trigger QA E2E on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+
 env:
-  QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Your actual org/repo
-  DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
-  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com'  # <-- Your QA environment URL
+  QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Update to your Agentic repo
+  DEFAULT_QASE_PROJECT: 'GPS'                  # <-- Update to your Qase project
+  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com' # <-- Update to your QA env URL
 
 jobs:
   extract-jira-and-trigger:
@@ -28,20 +28,17 @@ jobs:
     steps:
       - name: Extract Jira key from PR
         id: jira
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
-          PR_BODY=$(cat <<'BODY_EOF'
-          ${{ github.event.pull_request.body }}
-          BODY_EOF
-          )
-
-          PATTERN='${{ env.JIRA_PROJECT_PREFIX }}-[0-9]+'
+          PATTERN='[A-Z][A-Z0-9]+-[0-9]+'
 
           JIRA_KEY=""
 
           # 1. Check PR title first (highest priority)
-          MATCH=$(echo "$PR_TITLE" | grep -oE "$PATTERN" | head -1 || true)
+          MATCH=$(echo "$PR_TITLE" | grep -oE -- "$PATTERN" | head -1 || true)
           if [ -n "$MATCH" ]; then
             JIRA_KEY="$MATCH"
             echo "Found Jira key in PR title: $JIRA_KEY"
@@ -49,7 +46,7 @@ jobs:
 
           # 2. Check branch name
           if [ -z "$JIRA_KEY" ]; then
-            MATCH=$(echo "$PR_BRANCH" | grep -oiE "$PATTERN" | head -1 || true)
+            MATCH=$(echo "$PR_BRANCH" | grep -oiE -- "$PATTERN" | head -1 || true)
             if [ -n "$MATCH" ]; then
               JIRA_KEY=$(echo "$MATCH" | tr '[:lower:]' '[:upper:]')
               echo "Found Jira key in branch name: $JIRA_KEY"
@@ -58,7 +55,7 @@ jobs:
 
           # 3. Check PR body
           if [ -z "$JIRA_KEY" ]; then
-            MATCH=$(echo "$PR_BODY" | grep -oE "$PATTERN" | head -1 || true)
+            MATCH=$(echo "$PR_BODY" | grep -oE -- "$PATTERN" | head -1 || true)
             if [ -n "$MATCH" ]; then
               JIRA_KEY="$MATCH"
               echo "Found Jira key in PR body: $JIRA_KEY"
