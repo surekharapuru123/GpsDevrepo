@@ -15,12 +15,10 @@ name: Trigger QA E2E on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-
 env:
-  QA_REPO: 'your-org/AE.QA.Agentic'         # <-- Update to your Agentic repo
-  JIRA_PROJECT_PREFIX: '[A-Z][A-Z0-9]+'       # Matches any Jira project key
-  DEFAULT_QASE_PROJECT: 'GPS'                  # <-- Update to your Qase project
-  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com' # <-- Update to your QA env URL
+  QA_REPO: 'your-org/AE.QA.Agentic'           # <-- Your actual org/repo
+  DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
+  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com'  # <-- Your QA environment URL
 
 jobs:
   extract-jira-and-trigger:
