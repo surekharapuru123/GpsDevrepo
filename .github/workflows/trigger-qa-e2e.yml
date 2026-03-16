@@ -16,7 +16,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 env:
-  QA_REPO: 'your-org/AE.QA.Agentic'           # <-- Your actual org/repo
+  QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Your actual org/repo
   DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
   DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com'  # <-- Your QA environment URL
 
