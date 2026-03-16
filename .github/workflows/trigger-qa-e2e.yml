@@ -15,6 +15,9 @@ name: Trigger QA E2E on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  pull-requests: write
+  issues: write
 env:
   QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Your actual org/repo
   DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
