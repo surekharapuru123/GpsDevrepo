@@ -7,7 +7,6 @@
 #      with "Contents: Read & Write" permission on the AE.QA.Agentic repo.
 #   2. Add the PAT as a secret named QA_DISPATCH_TOKEN in your dev repo.
 #   3. Update QA_REPO below to point to the AE.QA.Agentic repo (owner/repo).
-#   4. Update JIRA_PROJECT_PREFIX if your Jira project key differs.
 # ============================================================================
 
 name: Trigger QA E2E on PR
@@ -15,13 +14,12 @@ name: Trigger QA E2E on PR
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-permissions:
-  pull-requests: write
-  issues: write
+
 env:
-  QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Your actual org/repo
-  DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
-  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com'  # <-- Your QA environment URL
+  QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Update to your Agentic repo
+  DEFAULT_QASE_PROJECT: 'GPS'                  # <-- Update to your Qase project
+  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com' # <-- Update to your QA env URL
+  LLM_PROVIDER: 'openai'                        # <-- 'anthropic' or 'openai'
 
 jobs:
   extract-jira-and-trigger:
@@ -31,20 +29,15 @@ jobs:
     steps:
       - name: Extract Jira key from PR
         id: jira
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
-          PR_BODY=$(cat <<'BODY_EOF'
-          ${{ github.event.pull_request.body }}
-          BODY_EOF
-          )
-
-          PATTERN='${{ env.JIRA_PROJECT_PREFIX }}-[0-9]+'
-
           JIRA_KEY=""
 
           # 1. Check PR title first (highest priority)
-          MATCH=$(echo "$PR_TITLE" | grep -oE "$PATTERN" | head -1 || true)
+          MATCH=$(echo "$PR_TITLE" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1 || true)
           if [ -n "$MATCH" ]; then
             JIRA_KEY="$MATCH"
             echo "Found Jira key in PR title: $JIRA_KEY"
@@ -52,7 +45,7 @@ jobs:
 
           # 2. Check branch name
           if [ -z "$JIRA_KEY" ]; then
-            MATCH=$(echo "$PR_BRANCH" | grep -oiE "$PATTERN" | head -1 || true)
+            MATCH=$(echo "$PR_BRANCH" | grep -oiE '[A-Za-z][A-Za-z0-9]+-[0-9]+' | head -1 || true)
             if [ -n "$MATCH" ]; then
               JIRA_KEY=$(echo "$MATCH" | tr '[:lower:]' '[:upper:]')
               echo "Found Jira key in branch name: $JIRA_KEY"
@@ -61,7 +54,7 @@ jobs:
 
           # 3. Check PR body
           if [ -z "$JIRA_KEY" ]; then
-            MATCH=$(echo "$PR_BODY" | grep -oE "$PATTERN" | head -1 || true)
+            MATCH=$(echo "$PR_BODY" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1 || true)
             if [ -n "$MATCH" ]; then
               JIRA_KEY="$MATCH"
               echo "Found Jira key in PR body: $JIRA_KEY"
@@ -94,6 +87,7 @@ jobs:
                 jira_key: '${{ steps.jira.outputs.jira_key }}',
                 project_code: '${{ env.DEFAULT_QASE_PROJECT }}',
                 base_url: '${{ env.DEFAULT_BASE_URL }}',
+                llm_provider: '${{ env.LLM_PROVIDER || 'anthropic' }}',
                 source_repo: '${{ github.repository }}',
                 source_pr_number: '${{ github.event.pull_request.number }}',
                 source_pr_sha: '${{ github.event.pull_request.head.sha }}',
@@ -105,28 +99,3 @@ jobs:
             console.log('Dispatched QA E2E pipeline to ' + owner + '/' + repo);
             console.log('Jira Key: ${{ steps.jira.outputs.jira_key }}');
             console.log('Source PR: ${{ github.repository }}#${{ github.event.pull_request.number }}');
-
-      - name: Post trigger confirmation on PR
-        if: steps.jira.outputs.found == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const body = [
-              '🔄 **QA E2E Pipeline Triggered**',
-              '',
-              `| Detail | Value |`,
-              `|--------|-------|`,
-              `| **Jira Key** | \`${{ steps.jira.outputs.jira_key }}\` |`,
-              `| **QA Repo** | \`${{ env.QA_REPO }}\` |`,
-              `| **Commit** | \`${{ github.event.pull_request.head.sha }}\` |`,
-              '',
-              '_Results will be posted here when the pipeline completes._'
-            ].join('\n');
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ github.event.pull_request.number }},
-              body
-            });
