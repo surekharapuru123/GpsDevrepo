@@ -17,8 +17,8 @@ on:
 
 env:
   QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Update to your Agentic repo
-  DEFAULT_QASE_PROJECT: 'GPS'                  # <-- Update to your Qase project
-  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com' # <-- Update to your QA env URL
+  DEFAULT_QASE_PROJECT: 'GLOBALP1'                  # <-- Update to your Qase project
+  DEFAULT_BASE_URL: 'https://qa3.gps.aegm.com' # <-- Update to your QA env URL
   LLM_PROVIDER: 'openai'                        # <-- 'anthropic' or 'openai'
 
 jobs:
