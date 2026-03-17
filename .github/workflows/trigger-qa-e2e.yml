@@ -20,8 +20,8 @@ permissions:
   issues: write
 env:
   QA_REPO: 'surekharapuru123/AE.QA.Agentic'           # <-- Your actual org/repo
-  DEFAULT_QASE_PROJECT: 'GPS'                   # <-- Your Qase project code
-  DEFAULT_BASE_URL: 'https://qa2.gps.aegm.com'  # <-- Your QA environment URL
+  DEFAULT_QASE_PROJECT: 'GLOBALP1'                   # <-- Your Qase project code
+  DEFAULT_BASE_URL: 'https://qa3.gps.aegm.com'  # <-- Your QA environment URL
 
 jobs:
   extract-jira-and-trigger:
